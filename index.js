@@ -1,5 +1,5 @@
 const CacheManager = require('cache-manager')
-const iu = require('middleware-if-unless')
+const iu = require('middleware-if-unless')()
 const ms = require('ms')
 const onEnd = require('on-http-end')
 const getKeys = require('./get-keys')
@@ -16,7 +16,7 @@ const middleware = (opts) => async (req, res, next) => {
   // creating multi-cache instance
   const mcache = CacheManager.multiCaching(opts.stores)
 
-  if (req.cacheDisabled) return
+  if (req.cacheDisabled) return next()
 
   let { url, cacheAppendKey = req => '' } = req
   cacheAppendKey = await cacheAppendKey(req)
@@ -48,9 +48,6 @@ const middleware = (opts) => async (req, res, next) => {
   }
 
   onEnd(res, (payload) => {
-    // avoid double caching
-    if (req.cacheHit) return
-
     if (payload.headers[X_CACHE_EXPIRE]) {
       // support service level expiration
       const keysPattern = payload.headers[X_CACHE_EXPIRE]
