@@ -113,6 +113,7 @@ service.use((req, res, next) => {
   req.cacheDisabled = true
   return next()
 })
+```
 
 ## Want to contribute?
 This is your repo ;)  
