@@ -59,7 +59,7 @@ Enabling proper caching strategies will drastically reduce the latency of your s
 For our services, we are talking here about improvements in response times from `X ms` to `~2ms`, as an example.
 
 ### Enabling cache for service endpoints
-Enabling an response to be cached just requires the 
+Enabling a response to be cached just requires the 
 `x-cache-timeout` header to be set:
 ```js
 res.setHeader('x-cache-timeout', '1 hour')
@@ -104,7 +104,7 @@ service.use((req, res, next) => {
   return next()
 })
 ```
-> In this example we also distinguish cache entries by `user.id`, very common case!
+> In this example we also distinguish cache entries by `user.id`, very important for authorization reasons.
 
 ### Disable cache for custom endpoints
 You can also disable cache checks for certain requests programmatically:
@@ -113,3 +113,11 @@ service.use((req, res, next) => {
   req.cacheDisabled = true
   return next()
 })
+
+## Want to contribute?
+This is your repo ;)  
+
+> Note: We aim to be 100% code coverage, please consider it on your pull requests.
+
+## Related projects
+- fast-gateway (https://www.npmjs.com/package/fast-gateway)
