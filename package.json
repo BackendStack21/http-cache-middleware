@@ -1,6 +1,6 @@
 {
   "name": "http-cache-middleware",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "HTTP Cache Middleware",
   "main": "index.js",
   "scripts": {

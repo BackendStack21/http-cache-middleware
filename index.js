@@ -50,9 +50,13 @@ const middleware = (opts) => async (req, res, next) => {
   onEnd(res, (payload) => {
     if (payload.headers[X_CACHE_EXPIRE]) {
       // support service level expiration
-      const keysPattern = payload.headers[X_CACHE_EXPIRE]
+      const keysPattern = payload.headers[X_CACHE_EXPIRE].replace(/\s/g, '')
+      const patterns = keysPattern.split(',')
       // delete keys on all cache tiers
-      opts.stores.forEach(cache => getKeys(cache, keysPattern).then(keys => mcache.del(keys)))
+      patterns.forEach(pattern =>
+        opts.stores.forEach(cache =>
+          getKeys(cache, pattern).then(keys =>
+            mcache.del(keys))))
     } else if (payload.headers[X_CACHE_TIMEOUT]) {
       // we need to cache response
       mcache.set(req.cacheKey, JSON.stringify(payload), {
