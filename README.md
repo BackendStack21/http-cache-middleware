@@ -94,6 +94,12 @@ service.patch('/numbers', (req, res) => {
 })
 ```
 
+#### Invalidating multiple patterns
+Sometimes is required to expire cache entries using multiple patterns, that is also possible using the `,` separator:
+```js
+res.setHeader('x-cache-expire', '*/pattern1,*/pattern2')
+```
+
 ### Custom cache keys
 Cache keys are generated using: `req.method + req.url`, however, for indexing/segmenting requirements it makes sense to allow cache keys extensions.  
 
