@@ -102,7 +102,7 @@ res.setHeader('etag', '1')
 This will enable browser clients to keep a copy of the cache on their side, but still being forced to validate 
 the cache state on the server before using the cached response, therefore supporting gateway based cache invalidation. 
 
-> NOTE: In order to fetch the generated `Cache-Control` and `ETag` headers, there have to be at least cache hit.
+> NOTE: In order to fetch the generated `Cache-Control` and `ETag` headers, there have to be at least cache hit.
 
 ### Invalidating caches 
 Services can easily expire cache entries on demand, i.e: when the data state changes. Here we use the `x-cache-expire` header to indicate the cache entries to expire using a matching pattern:
