@@ -1,5 +1,5 @@
 # http-cache-middleware
-High performance connect-like HTTP cache middleware for Node.js. 
+High performance connect-like HTTP cache middleware for Node.js. So your latency can decrease to single digit milliseconds 🚀 
 
 > Uses `cache-manager` as caching layer, so multiple
 storage engines are supported, i.e: Memory, Redis, ... https://www.npmjs.com/package/cache-manager
@@ -77,7 +77,34 @@ service.get('/numbers', (req, res) => {
 })
 ```
 
-### Invalidating caches
+### Caching on the browser side (304 status codes)
+> From version `1.2.x` you can also use the HTTP compatible `Cache-Control` header: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+When using the Cache-Control header, you can omit the custom `x-cache-timeout` header as the timeout can be passed using the `max-age` directive. 
+
+#### Direct usage: 
+```js 
+res.setHeader('cache-control', 'private, no-cache, max-age=300')
+res.setHeader('etag', '1')
+
+res.end('5 minutes cacheable content here....')
+```
+
+#### Indirect usage:
+When using:
+```js
+res.setHeader('x-cache-timeout', '5 minutes')
+```
+The middleware will now transparently generate default `Cache-Control` and `ETag` headers as described below:
+```js 
+res.setHeader('cache-control', 'private, no-cache, max-age=300')
+res.setHeader('etag', '1')
+```
+This will enable browser clients to keep a copy of the cache on their side, but still being forced to validate 
+the cache state on the server before using the cached response, therefore supporting gateway based cache invalidation. 
+
+> NOTE: In order to fetch the generated `Cache-Control` and `ETag` headers, there have to be at least one cache hit.
+
+### Invalidating caches 
 Services can easily expire cache entries on demand, i.e: when the data state changes. Here we use the `x-cache-expire` header to indicate the cache entries to expire using a matching pattern:
 ```js
 res.setHeader('x-cache-expire', '*/numbers')

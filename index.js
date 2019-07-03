@@ -1,5 +1,6 @@
 const CacheManager = require('cache-manager')
 const iu = require('middleware-if-unless')()
+const { parse: cacheControl } = require('@tusbar/cache-control')
 const ms = require('ms')
 const onEnd = require('on-http-end')
 const getKeys = require('./get-keys')
@@ -7,6 +8,9 @@ const getKeys = require('./get-keys')
 const X_CACHE_EXPIRE = 'x-cache-expire'
 const X_CACHE_TIMEOUT = 'x-cache-timeout'
 const X_CACHE_HIT = 'x-cache-hit'
+const CACHE_ETAG = 'etag'
+const CACHE_CONTROL = 'cache-control'
+const CACHE_IF_NONE_MATCH = 'if-none-match'
 
 const middleware = (opts) => async (req, res, next) => {
   opts = Object.assign({
@@ -31,6 +35,16 @@ const middleware = (opts) => async (req, res, next) => {
   if (cached) {
     // respond from cache if there is a hit
     let { status, headers, data } = JSON.parse(cached)
+
+    // pre-checking If-None-Match header
+    if (req.headers[CACHE_IF_NONE_MATCH] === headers[CACHE_ETAG]) {
+      res.setHeader('content-length', '0')
+      res.statusCode = 304
+      res.end()
+
+      return // exit because client cache state matches
+    }
+
     if (typeof data === 'object' && data.type === 'Buffer') {
       data = Buffer.from(data.data)
     }
@@ -53,17 +67,28 @@ const middleware = (opts) => async (req, res, next) => {
       const keysPattern = payload.headers[X_CACHE_EXPIRE].replace(/\s/g, '')
       const patterns = keysPattern.split(',')
       // delete keys on all cache tiers
-      patterns.forEach(pattern =>
-        opts.stores.forEach(cache =>
-          getKeys(cache, pattern).then(keys =>
-            mcache.del(keys))))
-    } else if (payload.headers[X_CACHE_TIMEOUT]) {
-      // we need to cache response
-      mcache.set(req.cacheKey, JSON.stringify(payload), {
-        // @NOTE: cache-manager uses seconds as TTL unit
-        // restrict to min value "1 second"
-        ttl: Math.max(ms(payload.headers[X_CACHE_TIMEOUT]), 1000) / 1000
-      })
+      patterns.forEach(pattern => opts.stores.forEach(store => getKeys(store, pattern).then(keys => mcache.del(keys))))
+    } else if (payload.headers[X_CACHE_TIMEOUT] || payload.headers[CACHE_CONTROL]) {
+      // extract cache ttl
+      let ttl = 0
+      if (payload.headers[CACHE_CONTROL]) {
+        ttl = cacheControl(payload.headers[CACHE_CONTROL]).maxAge
+      }
+      if (!ttl) {
+        ttl = Math.max(ms(payload.headers[X_CACHE_TIMEOUT]), 1000) / 1000 // min value: 1 second
+      }
+
+      // setting cache-control header if absent
+      if (!payload.headers[CACHE_CONTROL]) {
+        payload.headers[CACHE_CONTROL] = `private, no-cache, max-age=${ttl}`
+      }
+      // setting ETag if absent
+      if (!payload.headers[CACHE_ETAG]) {
+        payload.headers[CACHE_ETAG] = '1'
+      }
+
+      // cache response
+      mcache.set(req.cacheKey, JSON.stringify(payload), { ttl })
     }
   })
 
