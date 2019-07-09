@@ -84,7 +84,7 @@ When using the Cache-Control header, you can omit the custom `x-cache-timeout` h
 #### Direct usage: 
 ```js 
 res.setHeader('cache-control', 'private, no-cache, max-age=300')
-res.setHeader('etag', '1')
+res.setHeader('etag', 'cvbonrw6g00')
 
 res.end('5 minutes cacheable content here....')
 ```
@@ -97,7 +97,7 @@ res.setHeader('x-cache-timeout', '5 minutes')
 The middleware will now transparently generate default `Cache-Control` and `ETag` headers as described below:
 ```js 
 res.setHeader('cache-control', 'private, no-cache, max-age=300')
-res.setHeader('etag', '1')
+res.setHeader('etag', 'ao8onrw6gbt') // random ETag value 
 ```
 This will enable browser clients to keep a copy of the cache on their side, but still being forced to validate 
 the cache state on the server before using the cached response, therefore supporting gateway based cache invalidation. 

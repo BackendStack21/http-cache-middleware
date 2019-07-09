@@ -84,7 +84,7 @@ const middleware = (opts) => async (req, res, next) => {
       }
       // setting ETag if absent
       if (!payload.headers[CACHE_ETAG]) {
-        payload.headers[CACHE_ETAG] = '1'
+        payload.headers[CACHE_ETAG] = Math.random().toString(36).substring(2, 16)
       }
 
       // cache response
