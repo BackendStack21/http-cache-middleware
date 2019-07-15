@@ -75,7 +75,11 @@ const middleware = (opts) => async (req, res, next) => {
         ttl = cacheControl(payload.headers[CACHE_CONTROL]).maxAge
       }
       if (!ttl) {
-        ttl = Math.max(ms(payload.headers[X_CACHE_TIMEOUT]), 1000) / 1000 // min value: 1 second
+        if (payload.headers[X_CACHE_TIMEOUT]) {
+          ttl = Math.max(ms(payload.headers[X_CACHE_TIMEOUT]), 1000) / 1000 // min value: 1 second
+        } else {
+          return // no TTL found, we don't cache
+        }
       }
 
       // setting cache-control header if absent

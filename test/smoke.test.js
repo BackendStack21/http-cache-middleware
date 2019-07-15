@@ -43,6 +43,12 @@ describe('cache middleware', () => {
       }, 50)
     })
 
+    server.get('/cache-no-maxage', (req, res) => {
+      res.setHeader('etag', '1')
+      res.setHeader('cache-control', 'no-cache')
+      res.send('!maxage')
+    })
+
     server.get('/cache-control', (req, res) => {
       res.setHeader('cache-control', 'max-age=60')
       res.setHeader('etag', '1')
@@ -95,6 +101,13 @@ describe('cache middleware', () => {
   it('create cache (buffer)', async () => {
     const res = await got('http://localhost:3000/cache-buffer')
     expect(res.body).to.equal('world')
+    expect(res.headers['x-cache-hit']).to.equal(undefined)
+  })
+
+  it('no TTL detected', async () => {
+    await got('http://localhost:3000/cache-no-maxage')
+    const res = await got('http://localhost:3000/cache-no-maxage')
+    expect(res.body).to.equal('!maxage')
     expect(res.headers['x-cache-hit']).to.equal(undefined)
   })
 
