@@ -37,7 +37,7 @@ const middleware = (opts) => async (req, res, next) => {
     let { status, headers, data } = JSON.parse(cached)
 
     // pre-checking If-None-Match header
-    if (req.headers[CACHE_IF_NONE_MATCH] === headers[CACHE_ETAG]) {
+    if (req.headers[CACHE_IF_NONE_MATCH] && req.headers[CACHE_IF_NONE_MATCH] === headers[CACHE_ETAG]) {
       res.setHeader('content-length', '0')
       res.statusCode = 304
       res.end()
