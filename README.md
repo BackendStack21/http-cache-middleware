@@ -155,3 +155,6 @@ This is your repo ;)
 
 ## Related projects
 - fast-gateway (https://www.npmjs.com/package/fast-gateway)
+
+## Sponsors
+- Kindly sponsored by [ShareNow](https://www.share-now.com/), a company that promotes innovation!  
