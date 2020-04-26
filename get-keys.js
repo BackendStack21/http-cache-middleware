@@ -1,3 +1,5 @@
+'use strict'
+
 const matcher = require('matcher')
 
 const getKeys = (cache, pattern) => new Promise((resolve) => {

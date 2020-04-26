@@ -15,6 +15,12 @@
     "cache",
     "middleware"
   ],
+  "files": [
+    "index.js",
+    "get-keys.js",
+    "README.md",
+    "LICENSE"
+  ],
   "author": "Rolando Santamaria Maso <kyberneees@gmail.com>",
   "license": "MIT",
   "bugs": {

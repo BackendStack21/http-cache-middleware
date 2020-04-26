@@ -1,3 +1,5 @@
+'use strict'
+
 const CacheManager = require('cache-manager')
 const redisStore = require('cache-manager-ioredis')
 const redisCache = CacheManager.caching({

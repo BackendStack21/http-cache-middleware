@@ -1,3 +1,5 @@
+'use strict'
+
 /* global describe, it */
 const got = require('got')
 const expect = require('chai').expect
@@ -116,14 +118,14 @@ describe('cache middleware', () => {
     expect(res.body).to.equal('world')
     expect(res.headers['x-cache-hit']).to.equal('1')
     expect(res.headers['cache-control']).to.equal('no-cache')
-    expect(res.headers['etag']).to.equal('1')
+    expect(res.headers.etag).to.equal('1')
   })
 
   it('cache hit (buffer) - Etag', async () => {
     const res = await got('http://localhost:3000/cache-buffer')
     expect(res.body).to.equal('world')
     expect(res.headers['x-cache-hit']).to.equal('1')
-    expect(res.headers['etag']).to.equal('1')
+    expect(res.headers.etag).to.equal('1')
   })
 
   it('cache hit (buffer) - If-None-Match', async () => {

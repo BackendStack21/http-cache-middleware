@@ -1,3 +1,5 @@
+'use strict'
+
 const CacheManager = require('cache-manager')
 const iu = require('middleware-if-unless')()
 const { parse: cacheControl } = require('@tusbar/cache-control')
@@ -11,6 +13,7 @@ const X_CACHE_HIT = 'x-cache-hit'
 const CACHE_ETAG = 'etag'
 const CACHE_CONTROL = 'cache-control'
 const CACHE_IF_NONE_MATCH = 'if-none-match'
+const DATA_POSTFIX = '-d'
 
 const middleware = (opts) => async (req, res, next) => {
   try {
@@ -30,12 +33,12 @@ const middleware = (opts) => async (req, res, next) => {
     // ref cache key on req object
     req.cacheKey = key
 
-    // try to retrieve cached response
-    const cached = await get(mcache, key)
+    // try to retrieve cached response metadata
+    const metadata = await get(mcache, key)
 
-    if (cached) {
+    if (metadata) {
       // respond from cache if there is a hit
-      let { status, headers, data } = JSON.parse(cached)
+      const { status, headers, encoding } = JSON.parse(metadata)
 
       // pre-checking If-None-Match header
       if (req.headers[CACHE_IF_NONE_MATCH] && req.headers[CACHE_IF_NONE_MATCH] === headers[CACHE_ETAG]) {
@@ -43,30 +46,41 @@ const middleware = (opts) => async (req, res, next) => {
         res.statusCode = 304
         res.end()
 
-        return // exit because client cache state matches
+        return
+      } else {
+        // try to retrieve cached response data
+        const payload = await get(mcache, key + DATA_POSTFIX)
+        if (payload) {
+          let { data } = JSON.parse(payload)
+          if (typeof data === 'object' && data.type === 'Buffer') {
+            data = Buffer.from(data.data)
+          }
+          headers[X_CACHE_HIT] = '1'
+
+          // set cached response headers
+          Object.keys(headers).forEach(header => res.setHeader(header, headers[header]))
+
+          // send cached payload
+          req.cacheHit = true
+          res.statusCode = status
+          res.end(data, encoding)
+
+          return
+        }
       }
-
-      if (typeof data === 'object' && data.type === 'Buffer') {
-        data = Buffer.from(data.data)
-      }
-      headers[X_CACHE_HIT] = '1'
-
-      // set cached response headers
-      Object.keys(headers).forEach(header => res.setHeader(header, headers[header]))
-
-      // send cached payload
-      req.cacheHit = true
-      res.statusCode = status
-      res.end(data)
-
-      return
     }
 
     onEnd(res, (payload) => {
       if (payload.headers[X_CACHE_EXPIRE]) {
         // support service level expiration
         const keysPattern = payload.headers[X_CACHE_EXPIRE].replace(/\s/g, '')
-        const patterns = keysPattern.split(',')
+        const patterns = keysPattern.split(',').map(pattern =>
+          pattern.endsWith('*') ? pattern : [pattern, pattern + DATA_POSTFIX])
+          .reduce((acc, item) => {
+            acc.push(...item)
+
+            return acc
+          }, [])
         // delete keys on all cache tiers
         patterns.forEach(pattern => opts.stores.forEach(store => getKeys(store, pattern).then(keys => mcache.del(keys))))
       } else if (payload.headers[X_CACHE_TIMEOUT] || payload.headers[CACHE_CONTROL]) {
@@ -92,7 +106,10 @@ const middleware = (opts) => async (req, res, next) => {
           payload.headers[CACHE_ETAG] = Math.random().toString(36).substring(2, 16)
         }
 
-        // cache response
+        // cache response data
+        mcache.set(req.cacheKey + DATA_POSTFIX, JSON.stringify({ data: payload.data }), { ttl })
+        delete payload.data
+        // cache response metadata
         mcache.set(req.cacheKey, JSON.stringify(payload), { ttl })
       }
     })
