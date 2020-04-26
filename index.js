@@ -76,7 +76,11 @@ const middleware = (opts) => async (req, res, next) => {
         const keysPattern = payload.headers[X_CACHE_EXPIRE].replace(/\s/g, '')
         const patterns = keysPattern.split(',').map(pattern =>
           pattern.endsWith('*') ? pattern : [pattern, pattern + DATA_POSTFIX])
-          .flat()
+          .reduce((acc, item) => {
+            acc.push(...item)
+
+            return acc
+          }, [])
         // delete keys on all cache tiers
         patterns.forEach(pattern => opts.stores.forEach(store => getKeys(store, pattern).then(keys => mcache.del(keys))))
       } else if (payload.headers[X_CACHE_TIMEOUT] || payload.headers[CACHE_CONTROL]) {
