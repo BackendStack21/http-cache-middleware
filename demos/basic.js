@@ -1,3 +1,5 @@
+'use strict'
+
 const middleware = require('./../index')()
 const service = require('restana')()
 service.use(middleware)

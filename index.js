@@ -1,3 +1,5 @@
+'use strict'
+
 const CacheManager = require('cache-manager')
 const iu = require('middleware-if-unless')()
 const { parse: cacheControl } = require('@tusbar/cache-control')

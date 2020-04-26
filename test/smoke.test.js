@@ -1,3 +1,5 @@
+'use strict'
+
 /* global describe, it */
 const got = require('got')
 const expect = require('chai').expect
