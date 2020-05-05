@@ -71,7 +71,7 @@ const middleware = (opts) => async (req, res, next) => {
     }
 
     onEnd(res, (payload) => {
-      if (res.statusCode === 304) return
+      if (payload.status === 304) return
 
       if (payload.headers[X_CACHE_EXPIRE]) {
         // support service level expiration
