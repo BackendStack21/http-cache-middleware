@@ -70,7 +70,7 @@ const middleware = (opts) => async (req, res, next) => {
       }
     }
 
-    onEnd(res, (payload) => {
+    onEnd(res, async (payload) => {
       if (payload.status === 304) return
 
       if (payload.headers[X_CACHE_EXPIRE]) {
@@ -109,10 +109,10 @@ const middleware = (opts) => async (req, res, next) => {
         }
 
         // cache response data
-        mcache.set(req.cacheKey + DATA_POSTFIX, JSON.stringify({ data: payload.data }), { ttl })
+        await mcache.set(req.cacheKey + DATA_POSTFIX, JSON.stringify({ data: payload.data }), { ttl })
         delete payload.data
         // cache response metadata
-        mcache.set(req.cacheKey, JSON.stringify(payload), { ttl })
+        await mcache.set(req.cacheKey, JSON.stringify(payload), { ttl })
       }
     })
 
