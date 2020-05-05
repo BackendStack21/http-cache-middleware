@@ -1,6 +1,6 @@
 {
   "name": "http-cache-middleware",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "HTTP Cache Middleware",
   "main": "index.js",
   "scripts": {
@@ -32,12 +32,12 @@
     "got": "^10.7.0",
     "mocha": "^7.1.2",
     "nyc": "^15.0.1",
-    "restana": "^4.3.3",
+    "restana": "^4.3.4",
     "standard": "^14.3.3"
   },
   "dependencies": {
     "@tusbar/cache-control": "^0.4.0",
-    "cache-manager": "^3.2.1",
+    "cache-manager": "^3.3.0",
     "matcher": "^2.0.0",
     "middleware-if-unless": "^1.2.4",
     "ms": "^2.1.2",
