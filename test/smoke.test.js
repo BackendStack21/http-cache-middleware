@@ -61,6 +61,11 @@ describe('cache middleware', () => {
       res.setHeader('x-cache-expire', '*/cache')
       res.end()
     })
+
+    server.delete('/cache2', (req, res) => {
+      res.setHeader('x-cache-expire', '*/cache*')
+      res.end()
+    })
   })
 
   it('start', async () => {
@@ -94,7 +99,17 @@ describe('cache middleware', () => {
     await got.delete('http://localhost:3000/cache')
   })
 
-  it('create cache 2', async () => {
+  it('re-create cache', async () => {
+    const res = await got('http://localhost:3000/cache')
+    expect(res.body).to.equal('hello')
+    expect(res.headers['x-cache-hit']).to.equal(undefined)
+  })
+
+  it('cache expire using wildcard', async () => {
+    await got.delete('http://localhost:3000/cache2')
+  })
+
+  it('re-create cache', async () => {
     const res = await got('http://localhost:3000/cache')
     expect(res.body).to.equal('hello')
     expect(res.headers['x-cache-hit']).to.equal(undefined)
