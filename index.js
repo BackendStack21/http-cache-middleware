@@ -89,7 +89,7 @@ const middleware = (opts) => async (req, res, next) => {
           return acc
         }, [])
         // delete keys on all cache tiers
-        patterns.forEach(pattern => opts.stores.forEach(store => getKeys(store, pattern).then(keys => mcache.del(keys))))
+        patterns.forEach(pattern => opts.stores.forEach(store => getKeys(store, pattern).then(keys => keys.length > 0 ? mcache.del(keys) : null)))
       } else if (payload.headers[X_CACHE_TIMEOUT] || payload.headers[CACHE_CONTROL]) {
         // extract cache ttl
         let ttl = 0
