@@ -15,6 +15,17 @@ const middleware = require('../index')({
 
 const service = require('restana')()
 service.use(middleware)
-// ...
+
+service.get('/cache', (req, res) => {
+  setTimeout(() => {
+    res.setHeader('x-cache-timeout', '1 minute')
+    res.send('this supposed to be a cacheable response')
+  }, 50)
+})
+
+service.delete('/cache', (req, res) => {
+  res.setHeader('x-cache-expire', '*/cache-*')
+  res.end()
+})
 
 service.start(3000)
