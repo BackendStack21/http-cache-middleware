@@ -17,7 +17,7 @@
   ],
   "files": [
     "index.js",
-    "get-keys.js",
+    "utils.js",
     "README.md",
     "LICENSE"
   ],
