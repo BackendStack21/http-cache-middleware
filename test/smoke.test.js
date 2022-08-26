@@ -16,6 +16,14 @@ describe('cache middleware', () => {
 
       next()
     })
+    server.use((req, res, next) => {
+      if (req.url === '/custom-cache-key') {
+        req.cacheKey = 'my-custom-cache-key'
+      }
+
+      next()
+    })
+
     server.use(middleware)
 
     server.get('/health', (req, res) => {
@@ -27,6 +35,10 @@ describe('cache middleware', () => {
         res.setHeader('x-cache-timeout', '1 minute')
         res.send('hello')
       }, 50)
+    })
+
+    server.get('/custom-cache-key', (req, res) => {
+      res.send(req.cacheKey)
     })
 
     server.get('/cache', (req, res) => {
@@ -81,6 +93,11 @@ describe('cache middleware', () => {
     await got('http://localhost:3000/cache-disabled')
     const res = await got('http://localhost:3000/cache-disabled')
     expect(res.headers['x-cache-hit']).to.equal(undefined)
+  })
+
+  it('custom cache key', async () => {
+    const res = await got('http://localhost:3000/custom-cache-key')
+    expect(res.body).to.equal('my-custom-cache-key')
   })
 
   it('create cache', async () => {

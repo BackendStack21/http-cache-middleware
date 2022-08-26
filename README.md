@@ -127,17 +127,36 @@ Sometimes is required to expire cache entries using multiple patterns, that is a
 res.setHeader('x-cache-expire', '*/pattern1,*/pattern2')
 ```
 
+#### Direclty invalidating caches from stores
+```js
+const stores = [redisCache]
+const middleware = require('http-cache-middleware')({
+  stores
+})
+
+const { deleteKeys } = require('http-cache-middleware/utils')
+deleteKeys(stores, '*/pattern1,*/pattern2')
+```
+
 ### Custom cache keys
 Cache keys are generated using: `req.method + req.url`, however, for indexing/segmenting requirements it makes sense to allow cache keys extensions.  
 
-For doing this, we simply recommend using middlewares to extend the keys before caching checks happen:
+To accomplish this, we simply recommend using middlewares to extend the keys before caching checks happen:
 ```js
 service.use((req, res, next) => {
   req.cacheAppendKey = (req) => req.user.id // here cache key will be: req.method + req.url + req.user.id  
   return next()
 })
 ```
-> In this example we also distinguish cache entries by `user.id`, very important for authorization reasons.
+> In this example we also distinguish cache entries by `user.id`, commonly used for authorization reasons.
+
+In case full control of the `cache-key` value is preferred, just populate the `req.cacheKey` property with a `string` value. In this case, the req.method + req.url prefix is discarded:
+```js
+service.use((req, res, next) => {
+  req.cacheKey = 'CUSTOM-CACHE-KEY'
+  return next()
+})
+```
 
 ### Disable cache for custom endpoints
 You can also disable cache checks for certain requests programmatically:

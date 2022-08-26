@@ -2,7 +2,7 @@
 
 /* global describe, it */
 
-const getKeys = require('./../get-keys')
+const { getKeys } = require('./../utils')
 const expect = require('chai').expect
 
 describe('get-keys', () => {
