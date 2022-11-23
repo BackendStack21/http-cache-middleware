@@ -20,7 +20,7 @@ const middleware = (opts) => {
   }, opts)
   const mcache = CacheManager.multiCaching(opts.stores)
 
-  return async (req, res, next) => {
+  return iu(async (req, res, next) => {
     try {
       if (req.cacheDisabled) return next()
 
@@ -114,8 +114,8 @@ const middleware = (opts) => {
     } catch (err) {
       return next(err)
     }
-  }
+  })
 }
 
-module.exports = iu(middleware)
+module.exports = middleware
 module.exports.deleteKeys = deleteKeys
