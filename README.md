@@ -1,4 +1,12 @@
 # http-cache-middleware
+[![NPM version](https://badgen.net/npm/v/http-cache-middleware)](https://www.npmjs.com/package/http-cache-middleware)
+[![NPM Total Downloads](https://badgen.net/npm/dt/http-cache-middleware)](https://www.npmjs.com/package/http-cache-middleware)
+[![License](https://badgen.net/npm/license/http-cache-middleware)](https://www.npmjs.com/package/http-cache-middleware)
+[![TypeScript support](https://badgen.net/npm/types/http-cache-middleware)](https://www.npmjs.com/package/http-cache-middleware)
+[![Github stars](https://badgen.net/github/stars/jkyberneees/http-cache-middleware?icon=github)](https://github.com/jkyberneees/http-cache-middleware)
+
+<img src="logo.svg" width="400">  
+
 High performance connect-like HTTP cache middleware for Node.js. So your latency can decrease to single digit milliseconds 🚀 
 
 > Uses `cache-manager` as caching layer, so multiple
