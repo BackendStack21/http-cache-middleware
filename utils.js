@@ -18,18 +18,9 @@ const getKeys = (cache, pattern) => new Promise((resolve) => {
 const get = (cache, key) => cache.getAndPassUp(key)
 
 const deleteKeys = (stores, patterns) => {
-  patterns = patterns.map(pattern => pattern.endsWith('*')
-    ? pattern
-    : [pattern, pattern + DATA_POSTFIX]
-  ).reduce((acc, item) => {
-    if (Array.isArray(item)) {
-      acc.push(...item)
-    } else {
-      acc.push(item)
-    }
-
-    return acc
-  }, [])
+  patterns = patterns.map(pattern =>
+    pattern.endsWith('*') ? pattern : [pattern, pattern + DATA_POSTFIX]
+  ).flat()
 
   patterns.forEach(pattern => stores.forEach(store => getKeys(store, pattern).then(keys => keys.length > 0 ? store.del(keys) : null)))
 }
