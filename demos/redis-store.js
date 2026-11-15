@@ -24,7 +24,8 @@ service.get('/cache', (req, res) => {
 })
 
 service.delete('/cache', (req, res) => {
-  res.setHeader('x-cache-expire', '*/cache-*')
+  // keys look like "GET/cache", so this pattern expires the cached GET (and HEAD) responses
+  res.setHeader('x-cache-expire', '*/cache')
   res.end()
 })
 

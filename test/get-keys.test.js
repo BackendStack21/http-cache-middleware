@@ -1,9 +1,7 @@
 'use strict'
 
-/* global describe, it */
-
+const { describe, it, expect } = require('bun:test')
 const { getKeys } = require('./../utils')
-const expect = require('chai').expect
 
 describe('get-keys', () => {
   const pattern = '*/numbers'
@@ -22,24 +20,18 @@ describe('get-keys', () => {
     }
   }
 
-  it('should retrieve redis keys', function (done) {
-    getKeys(redisCache, pattern).then(keys => {
-      expect(keys.includes('GET/numbers')).to.equal(true)
-      done()
-    })
+  it('should retrieve redis keys', async () => {
+    const keys = await getKeys(redisCache, pattern)
+    expect(keys).toContain('GET/numbers')
   })
 
-  it('should skip pattern', function (done) {
-    getKeys(redisCache, 'GET/numbers').then(keys => {
-      expect(keys.includes('GET/numbers')).to.equal(true)
-      done()
-    })
+  it('should skip pattern', async () => {
+    const keys = await getKeys(redisCache, 'GET/numbers')
+    expect(keys).toContain('GET/numbers')
   })
 
-  it('should retrieve memory keys', function (done) {
-    getKeys(memoryCache, pattern).then(keys => {
-      expect(keys.includes('GET/numbers')).to.equal(true)
-      done()
-    })
+  it('should retrieve memory keys', async () => {
+    const keys = await getKeys(memoryCache, pattern)
+    expect(keys).toContain('GET/numbers')
   })
 })

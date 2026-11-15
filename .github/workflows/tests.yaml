@@ -5,17 +5,48 @@ jobs:
   testing:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Setup Environment (Using NodeJS 16.x)
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v7
+
+      - name: Setup Environment (Using Bun)
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 16.x
+          bun-version: latest
 
       - name: Install dependencies
-        run: npm install
+        run: bun install
 
       - name: Linting
-        run: npx standard
+        run: bun run lint
 
-      - name: Run tests
-        run: npm run test
+      - name: Run tests (with coverage)
+        run: bun run test
+
+  # the library targets Node.js, so its behavior is also checked using the Node.js runtime
+  node:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22.x, 24.x, 26.x]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Smoke test
+        run: node test/node-smoke.js
+
+      # same scenarios as test/frameworks.test.js (restana and Express), using Node.js
+      - name: Framework integration tests
+        # restana 7 (devDependency) requires Node.js >= 24
+        if: matrix.node-version != '22.x'
+        run: node test/node-frameworks.js
