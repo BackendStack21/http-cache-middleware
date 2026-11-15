@@ -212,6 +212,12 @@ describe('hardening', () => {
     expect(JSON.parse(await cache.get('HEAD/head-with-body')).data).toBeUndefined()
   })
 
+  it('answers unknown routes with a 404 that is not cached', async () => {
+    expect((await app.request('/unknown')).status).toBe(404)
+    expect((await app.request('/toString')).status).toBe(404)
+    expect(await stored('GET/unknown')).toBe(false)
+  })
+
   it('treats malformed entries as a miss', async () => {
     const entry = { v: 2, status: 200, headers: {}, expires: Date.now() + 60000, data: 'seeded' }
     const variants = [

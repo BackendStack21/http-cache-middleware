@@ -11,7 +11,7 @@ const memoryCache = () => CacheManager.caching({ store: 'memory', max: 1000, ttl
 /**
  * Minimal connect-like app on top of a raw node:http server, listening on an ephemeral port.
  * Every request runs `before` (optional), then the middleware; `next()` dispatches to
- * `routes[pathname]`, while `next(err)` is recorded in `errors` and answered with a 500.
+ * `routes[pathname]` (404 if there is none), while `next(err)` is recorded in `errors` and answered with a 500.
  */
 const serve = async (middleware, routes, before = () => {}) => {
   const errors = []
@@ -24,7 +24,14 @@ const serve = async (middleware, routes, before = () => {}) => {
         return res.end()
       }
 
-      routes[req.url.split('?')[0]](req, res)
+      const path = req.url.split('?')[0]
+      const handler = Object.hasOwn(routes, path) ? routes[path] : undefined
+      if (typeof handler !== 'function') {
+        res.statusCode = 404
+        return res.end()
+      }
+
+      handler(req, res)
     })
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))

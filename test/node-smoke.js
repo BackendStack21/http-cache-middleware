@@ -44,7 +44,13 @@ const server = http.createServer((req, res) => middleware(req, res, (err) => {
     return res.end(String(err))
   }
 
-  routes[req.url](req, res)
+  const handler = Object.hasOwn(routes, req.url) ? routes[req.url] : undefined
+  if (typeof handler !== 'function') {
+    res.statusCode = 404
+    return res.end()
+  }
+
+  handler(req, res)
 }))
 
 const main = async () => {
