@@ -1,13 +1,23 @@
 'use strict'
 
-/* global describe, it */
-const got = require('got')
-const expect = require('chai').expect
+const { describe, it, expect, beforeAll, afterAll } = require('bun:test')
 
+// NOTE: the tests below are sequential and stateful (they share one server
+// and one in-memory cache), so their order matters.
 describe('cache middleware', () => {
   const server = require('restana')()
+  let baseUrl
 
-  it('init', async () => {
+  // unlike got, fetch does not throw on non-2xx responses: status codes are
+  // asserted explicitly, and bodies are always consumed
+  const request = async (path, init) => {
+    const res = await fetch(baseUrl + path, init)
+    const body = await res.text()
+
+    return { res, body }
+  }
+
+  beforeAll(async () => {
     const middleware = require('./../index')()
     server.use((req, res, next) => {
       if (req.url === '/cache-disabled') {
@@ -78,109 +88,128 @@ describe('cache middleware', () => {
       res.setHeader('x-cache-expire', '*/cache*')
       res.end()
     })
+
+    // ephemeral port, so the suite never collides with anything else
+    const httpServer = await server.start(0, '127.0.0.1')
+    baseUrl = `http://127.0.0.1:${httpServer.address().port}`
   })
 
-  it('start', async () => {
-    return server.start(3000)
+  afterAll(async () => {
+    // drop idle keep-alive sockets held by fetch, otherwise close() waits on them
+    server.getServer().closeAllConnections()
+    await server.close()
   })
 
   it('no-cache', async () => {
-    const res = await got('http://localhost:3000/health')
-    expect(res.headers['x-cache-hit']).to.equal(undefined)
+    const { res } = await request('/health')
+    expect(res.status).toBe(200)
+    expect(res.headers.get('x-cache-hit')).toBeNull()
   })
 
   it('cache disabled', async () => {
-    await got('http://localhost:3000/cache-disabled')
-    const res = await got('http://localhost:3000/cache-disabled')
-    expect(res.headers['x-cache-hit']).to.equal(undefined)
+    const first = await request('/cache-disabled')
+    expect(first.res.status).toBe(200)
+    const { res } = await request('/cache-disabled')
+    expect(res.status).toBe(200)
+    expect(res.headers.get('x-cache-hit')).toBeNull()
   })
 
   it('custom cache key', async () => {
-    const res = await got('http://localhost:3000/custom-cache-key')
-    expect(res.body).to.equal('my-custom-cache-key')
+    const { res, body } = await request('/custom-cache-key')
+    expect(res.status).toBe(200)
+    expect(body).toBe('my-custom-cache-key')
   })
 
   it('create cache', async () => {
-    const res = await got('http://localhost:3000/cache')
-    expect(res.body).to.equal('hello')
-    expect(res.headers['x-cache-hit']).to.equal(undefined)
+    const { res, body } = await request('/cache')
+    expect(res.status).toBe(200)
+    expect(body).toBe('hello')
+    expect(res.headers.get('x-cache-hit')).toBeNull()
   })
 
   it('cache hit', async () => {
-    const res = await got('http://localhost:3000/cache')
-    expect(res.body).to.equal('hello')
-    expect(res.headers['x-cache-hit']).to.equal('1')
+    const { res, body } = await request('/cache')
+    expect(res.status).toBe(200)
+    expect(body).toBe('hello')
+    expect(res.headers.get('x-cache-hit')).toBe('1')
   })
 
   it('cache expire', async () => {
-    await got.delete('http://localhost:3000/cache')
+    const { res } = await request('/cache', { method: 'DELETE' })
+    expect(res.status).toBe(200)
   })
 
   it('re-create cache', async () => {
-    const res = await got('http://localhost:3000/cache')
-    expect(res.body).to.equal('hello')
-    expect(res.headers['x-cache-hit']).to.equal(undefined)
+    const { res, body } = await request('/cache')
+    expect(res.status).toBe(200)
+    expect(body).toBe('hello')
+    expect(res.headers.get('x-cache-hit')).toBeNull()
   })
 
   it('cache expire using wildcard', async () => {
-    await got.delete('http://localhost:3000/cache2')
+    const { res } = await request('/cache2', { method: 'DELETE' })
+    expect(res.status).toBe(200)
   })
 
   it('re-create cache', async () => {
-    const res = await got('http://localhost:3000/cache')
-    expect(res.body).to.equal('hello')
-    expect(res.headers['x-cache-hit']).to.equal(undefined)
+    const { res, body } = await request('/cache')
+    expect(res.status).toBe(200)
+    expect(body).toBe('hello')
+    expect(res.headers.get('x-cache-hit')).toBeNull()
   })
 
   it('create cache (buffer)', async () => {
-    const res = await got('http://localhost:3000/cache-buffer')
-    expect(res.body).to.equal('world')
-    expect(res.headers['x-cache-hit']).to.equal(undefined)
+    const { res, body } = await request('/cache-buffer')
+    expect(res.status).toBe(200)
+    expect(body).toBe('world')
+    expect(res.headers.get('x-cache-hit')).toBeNull()
   })
 
   it('no TTL detected', async () => {
-    await got('http://localhost:3000/cache-no-maxage')
-    const res = await got('http://localhost:3000/cache-no-maxage')
-    expect(res.body).to.equal('!maxage')
-    expect(res.headers['x-cache-hit']).to.equal(undefined)
+    const first = await request('/cache-no-maxage')
+    expect(first.res.status).toBe(200)
+    const { res, body } = await request('/cache-no-maxage')
+    expect(res.status).toBe(200)
+    expect(body).toBe('!maxage')
+    expect(res.headers.get('x-cache-hit')).toBeNull()
   })
 
   it('cache hit (buffer)', async () => {
-    const res = await got('http://localhost:3000/cache-buffer')
-    expect(res.body).to.equal('world')
-    expect(res.headers['x-cache-hit']).to.equal('1')
-    expect(res.headers['cache-control']).to.equal('no-cache')
-    expect(res.headers.etag).to.equal('1')
+    const { res, body } = await request('/cache-buffer')
+    expect(res.status).toBe(200)
+    expect(body).toBe('world')
+    expect(res.headers.get('x-cache-hit')).toBe('1')
+    expect(res.headers.get('cache-control')).toBe('no-cache')
+    expect(res.headers.get('etag')).toBe('1')
   })
 
   it('cache hit (buffer) - Etag', async () => {
-    const res = await got('http://localhost:3000/cache-buffer')
-    expect(res.body).to.equal('world')
-    expect(res.headers['x-cache-hit']).to.equal('1')
-    expect(res.headers.etag).to.equal('1')
+    const { res, body } = await request('/cache-buffer')
+    expect(res.status).toBe(200)
+    expect(body).toBe('world')
+    expect(res.headers.get('x-cache-hit')).toBe('1')
+    expect(res.headers.get('etag')).toBe('1')
   })
 
   it('cache hit (buffer) - If-None-Match', async () => {
-    const res = await got('http://localhost:3000/cache-buffer', {
+    const { res } = await request('/cache-buffer', {
       headers: {
         'If-None-Match': '1'
       }
     })
-    expect(res.statusCode).to.equal(304)
+    expect(res.status).toBe(304)
   })
 
   it('cache create - cache-control', async () => {
-    const res = await got('http://localhost:3000/cache-control')
-    expect(res.body).to.equal('cache')
+    const { res, body } = await request('/cache-control')
+    expect(res.status).toBe(200)
+    expect(body).toBe('cache')
   })
 
   it('cache hit - cache-control', async () => {
-    const res = await got('http://localhost:3000/cache-control')
-    expect(res.body).to.equal('cache')
-    expect(res.headers['x-cache-hit']).to.equal('1')
-  })
-
-  it('close', async () => {
-    return server.close()
+    const { res, body } = await request('/cache-control')
+    expect(res.status).toBe(200)
+    expect(body).toBe('cache')
+    expect(res.headers.get('x-cache-hit')).toBe('1')
   })
 })

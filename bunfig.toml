@@ -1,0 +1,13 @@
+# Bun configuration: https://bun.com/docs/runtime/bunfig
+
+[install.lockfile]
+# This repo intentionally ships without a lockfile (see .npmrc: package-lock=false)
+save = false
+
+[test]
+root = "test"
+# Only report coverage for the library sources, not the test files themselves
+coverageSkipTestFiles = true
+# Enforced only when coverage is enabled (`bun test --coverage` / `bun run test`).
+# Bun checks it per file (not against the "All files" average), test/helpers.js included.
+coverageThreshold = { lines = 0.99, functions = 0.99 }
